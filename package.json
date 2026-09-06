@@ -1,0 +1,13 @@
+{
+  "name": "samehadaku-scraper",
+  "version": "1.0.0",
+  "description": "Samehadaku scraper all-in-one",
+  "main": "samehadaku.js",
+  "scripts": {
+    "start": "node samehadaku.js serve",
+    "test": "node samehadaku.js search naruto"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  }
+}
