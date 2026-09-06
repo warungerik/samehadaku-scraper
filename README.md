@@ -274,4 +274,4 @@ Terbantu? Traktir kopi:
 
 ## Lisensi
 
-MIT. Lihat [`LICENSE`](./LICENSE).
+MIT.[`LICENSE`](./LICENSE).
