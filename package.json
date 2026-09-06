@@ -1,7 +1,7 @@
 {
   "name": "samehadaku-scraper",
   "version": "1.0.0",
-  "description": "Samehadaku scraper all-in-one",
+  "description": "Samehadaku scraper",
   "main": "samehadaku.js",
   "scripts": {
     "start": "node samehadaku.js serve",

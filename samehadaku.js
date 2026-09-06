@@ -28,10 +28,12 @@ function fetchRaw(endpoint, options = {}) {
 }
 
 function cleanUrl(link) {
-  if (!link) return '';
-  if (link.startsWith('http')) return link;
-  if (link.startsWith('/')) return `${BASE_URL}${link}`;
-  return `${BASE_URL}/${link}`;
+  if (!link) return null;
+  const v = link.trim();
+  if (!v || v === '#' || v.startsWith('javascript:')) return null;
+  if (v.startsWith('http')) return v;
+  if (v.startsWith('/')) return `${BASE_URL}${v}`;
+  return `${BASE_URL}/${v}`;
 }
 
 function extractSlug(link) {
@@ -50,8 +52,9 @@ async function getLatest(page = 1) {
   const data = [];
 
   $('.post-show ul li').each((_, el) => {
-    const title = $(el).find('.entry-title a, .dtla h2 a').text().trim();
-    const epUrl = cleanUrl($(el).find('.entry-title a, .dtla h2 a').attr('href'));
+    const anchor = $(el).find('.entry-title a, .dtla h2 a').first();
+    const title = anchor.text().trim();
+    const epUrl = cleanUrl(anchor.attr('href'));
     if (!title || !epUrl) return;
 
     data.push({
@@ -167,6 +170,8 @@ async function getAnimeDetail(slugOrUrl) {
     });
   });
 
+  const batchEl = $('.batchlink a').first();
+
   return {
     status: 'success',
     title: $('h1.entry-title').text().trim(),
@@ -188,7 +193,7 @@ async function getAnimeDetail(slugOrUrl) {
       released: info.released || null
     },
     genres,
-    batchUrl: cleanUrl($('.batchlink a').attr('href')) || null,
+    batchUrl: cleanUrl(batchEl.attr('href')),
     totalEpisodes: episodes.length,
     episodes
   };
@@ -224,14 +229,21 @@ async function getEpisodeDetail(slugOrUrl, resolveStreams = true) {
       } catch (_) {}
     }
 
-    streamingServers.push({
-      name,
-      available,
-      postId: post || null,
-      nume: nume || null,
-      embedUrl
-    });
+    if (embedUrl) {
+      streamingServers.push({
+        name,
+        postId: post,
+        nume,
+        embedUrl
+      });
+    }
   }
+
+  const pickNav = sel => {
+    const a = $(`.naveps ${sel} a`).first();
+    if (!a.length || a.hasClass('nonex')) return null;
+    return cleanUrl(a.attr('href'));
+  };
 
   const downloads = [];
   $('.download-eps').each((_, sec) => {
@@ -244,14 +256,16 @@ async function getEpisodeDetail(slugOrUrl, resolveStreams = true) {
 
       $(li).find('span a').each((_, a) => {
         const server = $(a).text().trim();
-        const href = $(a).attr('href');
+        const href = cleanUrl($(a).attr('href'));
         if (server && href) links.push({ server, url: href });
       });
 
-      if (q && links.length) qualities.push({ quality: q, links });
+      if (!q || !links.length) return;
+      qualities.push({ quality: q, links });
     });
 
-    if (qualities.length) downloads.push({ format, qualities });
+    if (!qualities.length) return;
+    downloads.push({ format, qualities });
   });
 
   return {
@@ -260,9 +274,9 @@ async function getEpisodeDetail(slugOrUrl, resolveStreams = true) {
     slug: extractSlug(target),
     url: target,
     navigation: {
-      allEpisodesUrl: cleanUrl($('.naveps .nvsc a').attr('href')) || null,
-      prevEpisodeUrl: cleanUrl($('.naveps .nvs.nvsl a').attr('href')) || null,
-      nextEpisodeUrl: cleanUrl($('.naveps .nvs.nvsr a').attr('href')) || null
+      allEpisodesUrl: pickNav('.nvsc'),
+      prevEpisodeUrl: pickNav('.nvs:not(.nvsc):not(.rght)'),
+      nextEpisodeUrl: pickNav('.nvs.rght')
     },
     streamingServers,
     downloads
